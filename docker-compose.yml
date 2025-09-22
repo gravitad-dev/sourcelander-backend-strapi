@@ -42,7 +42,7 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
     volumes:
-      - sourcelander-backend-strapi:/var/lib/postgresql/data/ #using a volume
+      - $DATA:/var/lib/postgresql/data/ #using a volume
       #- ./data:/var/lib/postgresql/data/ # if you want to use a bind folder
 
 #    ports:
