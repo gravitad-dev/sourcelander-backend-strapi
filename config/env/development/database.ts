@@ -1,13 +1,12 @@
+import path from "path";
+
 export default ({ env }) => ({
-	connection: {
-		client: 'postgres',
-		connection: {
-		host: env('DATABASE_HOST', 'strapiDB'),
-			port: env.int('DATABASE_PORT', 5432),
-			database: env('DATABASE_NAME', 'strapi'),
-			user: env('DATABASE_USERNAME', 'strapi'),
-			password: env('DATABASE_PASSWORD', 'strapi'),
-			ssl: env.bool('DATABASE_SSL', false)
-		}
-	}
+  connection: {
+    client: "sqlite",
+    connection: {
+      // keep the DB OUTSIDE dist/, and ensure it's exactly the env path
+      filename: env("DATABASE_FILENAME", path.join(process.cwd(), ".tmp/dev.db")),
+    },
+    useNullAsDefault: true,
+  },
 });
