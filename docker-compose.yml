@@ -26,8 +26,8 @@ services:
 
 #      - ./.env:/opt/app/.env
       - ./public/uploads:/opt/app/public/uploads
-    ports:
-      - '1339:1337'
+#    ports:
+#      - '1339:1337'
     networks:
       - strapi
     depends_on:
@@ -53,18 +53,6 @@ services:
     networks:
       - strapi
 
-  strapiAdminer:
-    container_name: strapiAdminer
-    image: adminer
-    restart: unless-stopped
-    ports:
-      - '9099:8080'
-    environment:
-      - ADMINER_DEFAULT_SERVER=strapiDB
-    networks:
-      - strapi
-    depends_on:
-      - strapiDB
 
 volumes:
   sourcelander-backend-strapi:
