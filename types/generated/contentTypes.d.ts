@@ -443,6 +443,51 @@ export interface ApiAuthorAuthor extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiCachedFreelancerCachedFreelancer
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'cached_freelancers';
+  info: {
+    description: 'Freelancers cacheados del scraping';
+    displayName: 'Cached Freelancer';
+    pluralName: 'cached-freelancers';
+    singularName: 'cached-freelancer';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    avatar: Schema.Attribute.String;
+    country: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    currency: Schema.Attribute.String & Schema.Attribute.DefaultTo<'USD'>;
+    description: Schema.Attribute.Text;
+    hourlyRate: Schema.Attribute.Decimal;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::cached-freelancer.cached-freelancer'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    profileUrl: Schema.Attribute.String;
+    projectsCompleted: Schema.Attribute.Integer;
+    publishedAt: Schema.Attribute.DateTime;
+    query: Schema.Attribute.String;
+    rating: Schema.Attribute.Decimal;
+    scrapedAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    skills: Schema.Attribute.JSON;
+    source: Schema.Attribute.Enumeration<['workana', 'hubstaff']> &
+      Schema.Attribute.Required;
+    sourceId: Schema.Attribute.String & Schema.Attribute.Required;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   collectionName: 'categories';
   info: {
@@ -1081,6 +1126,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::article.article': ApiArticleArticle;
       'api::author.author': ApiAuthorAuthor;
+      'api::cached-freelancer.cached-freelancer': ApiCachedFreelancerCachedFreelancer;
       'api::category.category': ApiCategoryCategory;
       'api::freelancer.freelancer': ApiFreelancerFreelancer;
       'api::global.global': ApiGlobalGlobal;
