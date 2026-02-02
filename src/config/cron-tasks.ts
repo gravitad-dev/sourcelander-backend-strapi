@@ -1,6 +1,6 @@
-import { stagehandScraper } from "./services/scraper/stagehand-scraper";
+import { stagehandScraper } from "../services/scraper/stagehand-scraper";
 
-const BOOTSTRAP_ENABLED = process.env.ENABLE_INITIAL_SCRAPER === "true";
+const CRON_ENABLED = process.env.ENABLE_SCRAPER_CRON === "true";
 
 const QUERIES_TO_SCRAPE = [
   "web-development",
@@ -18,19 +18,44 @@ const QUERIES_TO_SCRAPE = [
   "ui-ux",
 ];
 
-async function runInitialScraping(strapi: any) {
-  strapi.log.info("🚀 Bootstrap: Starting initial scraping...");
+async function runFullScraping(strapi: any) {
+  strapi.log.info("🔄 Cron: Starting weekly scraping job...");
+
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  const staleFreelancers = await strapi.entityService.findMany(
+    "api::cached-freelancer.cached-freelancer" as any,
+    {
+      filters: { scrapedAt: { $lt: sixMonthsAgo.toISOString() } },
+      fields: ["id"],
+    },
+  );
+
+  for (const f of staleFreelancers) {
+    await strapi.entityService.delete(
+      "api::cached-freelancer.cached-freelancer" as any,
+      f.id,
+    );
+  }
+
+  if (staleFreelancers.length > 0) {
+    strapi.log.info(
+      `🧹 Cleaned ${staleFreelancers.length} stale freelancers (>6 months)`,
+    );
+  }
 
   for (const query of QUERIES_TO_SCRAPE) {
-    if (!strapi?.entityService) {
-      console.log("⚠️ Strapi reloaded, aborting scraping...");
-      return;
-    }
-
     try {
       const [workanaResults, hubstaffResults] = await Promise.all([
-        stagehandScraper.scrapeWorkana(query, 1).catch(() => []),
-        stagehandScraper.scrapeHubstaff(query, 1).catch(() => []),
+        stagehandScraper.scrapeWorkana(query, 1).catch((e) => {
+          strapi.log.error(`Workana error for ${query}:`, e);
+          return [];
+        }),
+        stagehandScraper.scrapeHubstaff(query, 1).catch((e) => {
+          strapi.log.error(`Hubstaff error for ${query}:`, e);
+          return [];
+        }),
       ]);
 
       const allFreelancers = [
@@ -62,10 +87,12 @@ async function runInitialScraping(strapi: any) {
           country: freelancer.country,
           hourlyRate: freelancer.hourlyRate,
           skills: freelancer.skills,
+          rating: freelancer.rating,
+          projectsCompleted: freelancer.projectsCompleted,
           scrapedAt: new Date(),
         };
 
-        if (existing?.length > 0) {
+        if (existing && existing.length > 0) {
           await strapi.entityService.update(
             "api::cached-freelancer.cached-freelancer" as any,
             existing[0].id,
@@ -79,26 +106,28 @@ async function runInitialScraping(strapi: any) {
         }
       }
 
-      strapi.log.info(`✅ Cached ${allFreelancers.length} for: ${query}`);
-      await new Promise((r) => setTimeout(r, 2000));
+      strapi.log.info(
+        `✅ Cached ${allFreelancers.length} freelancers for: ${query}`,
+      );
+      await new Promise((r) => setTimeout(r, 3000));
     } catch (error) {
       strapi.log.error(`❌ Error scraping ${query}:`, error);
     }
   }
 
   await stagehandScraper.close();
-  strapi.log.info("✅ Initial scraping completed");
+  strapi.log.info("✅ Weekly scraping job completed");
 }
 
-export default {
-  register() {},
-  async bootstrap({ strapi }) {
-    if (BOOTSTRAP_ENABLED) {
-      runInitialScraping(strapi);
-    } else {
-      strapi.log.info(
-        "Bootstrap scraping disabled (ENABLE_INITIAL_SCRAPER!=true)",
-      );
+export default CRON_ENABLED
+  ? {
+      scraperJob: {
+        task: async ({ strapi }) => {
+          await runFullScraping(strapi);
+        },
+        options: {
+          rule: "0 6 * * 1",
+        },
+      },
     }
-  },
-};
+  : {};

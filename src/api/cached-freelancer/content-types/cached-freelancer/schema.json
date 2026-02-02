@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cached_freelancers",
+  "info": {
+    "singularName": "cached-freelancer",
+    "pluralName": "cached-freelancers",
+    "displayName": "Cached Freelancer",
+    "description": "Freelancers cacheados del scraping"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "sourceId": {
+      "type": "string",
+      "required": true
+    },
+    "source": {
+      "type": "enumeration",
+      "enum": ["workana", "hubstaff"],
+      "required": true
+    },
+    "query": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "profileUrl": {
+      "type": "string"
+    },
+    "avatar": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "hourlyRate": {
+      "type": "decimal"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "skills": {
+      "type": "json"
+    },
+    "rating": {
+      "type": "decimal"
+    },
+    "projectsCompleted": {
+      "type": "integer"
+    },
+    "scrapedAt": {
+      "type": "datetime",
+      "required": true
+    }
+  }
+}

@@ -1,61 +1,87 @@
-# 🚀 Getting started with Strapi
+# Sourcelander Backend
 
-Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
+Backend API built with Strapi for the Sourcelander freelancer marketplace.
 
-### `develop`
+## Requirements
 
-Start your Strapi application with autoReload enabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-develop)
+- Node.js >= 18.x
+- Google Chrome (for Puppeteer scraping)
 
-```
-npm run develop
-# or
-yarn develop
-```
+## Setup
 
-### `start`
-
-Start your Strapi application with autoReload disabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-start)
-
-```
-npm run start
-# or
-yarn start
+```bash
+npm install
+npm run dev
 ```
 
-### `build`
+## Environment Variables
 
-Build your admin panel. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-build)
+### Development (.env)
 
-```
-npm run build
-# or
-yarn build
-```
-
-## ⚙️ Deployment
-
-Strapi gives you many possible deployment options for your project including [Strapi Cloud](https://cloud.strapi.io). Browse the [deployment section of the documentation](https://docs.strapi.io/dev-docs/deployment) to find the best solution for your use case.
-
-```
-yarn strapi deploy
+```env
+HOST=0.0.0.0
+PORT=1337
+APP_KEYS=your-app-keys
+API_TOKEN_SALT=your-token-salt
+ADMIN_JWT_SECRET=your-admin-jwt-secret
+JWT_SECRET=your-jwt-secret
+TRANSFER_TOKEN_SALT=your-transfer-token-salt
 ```
 
-## 📚 Learn more
+### Production (additional variables)
 
-- [Resource center](https://strapi.io/resource-center) - Strapi resource center.
-- [Strapi documentation](https://docs.strapi.io) - Official Strapi documentation.
-- [Strapi tutorials](https://strapi.io/tutorials) - List of tutorials made by the core team and the community.
-- [Strapi blog](https://strapi.io/blog) - Official Strapi blog containing articles made by the Strapi team and the community.
-- [Changelog](https://strapi.io/changelog) - Find out about the Strapi product updates, new features and general improvements.
+```env
+NODE_ENV=production
+DATABASE_CLIENT=postgres
+DATABASE_HOST=your-db-host
+DATABASE_PORT=5432
+DATABASE_NAME=strapi
+DATABASE_USERNAME=strapi
+DATABASE_PASSWORD=your-password
+ENCRYPTION_KEY=your-encryption-key
+URL=https://your-domain.com/
+```
 
-Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/strapi). Your feedback and contributions are welcome!
+## Strapi Admin Permissions
 
-## ✨ Community
+After first run, configure permissions in **Settings > Users & Permissions > Roles > Public/Authenticated**:
 
-- [Discord](https://discord.strapi.io) - Come chat with the Strapi community including the core team.
-- [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
-- [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
+### Required Public/Authenticated Permissions
 
----
+| Content Type        | Actions           |
+| ------------------- | ----------------- |
+| `Search`            | `find`            |
+| `Cached-freelancer` | `find`, `findOne` |
+| `Email`             | `send`            |
 
-<sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
+## API Endpoints
+
+| Method | Endpoint                                 | Description        |
+| ------ | ---------------------------------------- | ------------------ |
+| `GET`  | `/api/search/freelancers?query=X&page=1` | Search freelancers |
+| `POST` | `/api/email/send`                        | Send contact email |
+| `POST` | `/api/email/send-bulk`                   | Send bulk emails   |
+
+## Scraping System
+
+### Bootstrap Scraping
+
+On server start, scrapes **8 pages** from Workana + Hubstaff for predefined queries:
+
+- javascript, react, python, nodejs, web-development, mobile-development, design, ui-ux
+
+### Weekly Cron
+
+Every **Monday at 6 AM**, rescans all queries with 3 pages each.
+
+### On-Demand
+
+When a user searches a new query not in cache, scrapes 4 pages on the fly.
+
+## Scripts
+
+```bash
+npm run dev      # Development with auto-reload
+npm run build    # Build for production
+npm run start    # Start production server
+```
