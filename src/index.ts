@@ -1,4 +1,6 @@
-import { puppeteerScraper } from "./services/scraper/puppeteer-scraper";
+import { stagehandScraper } from "./services/scraper/stagehand-scraper";
+
+const BOOTSTRAP_ENABLED = process.env.ENABLE_INITIAL_SCRAPER === "true";
 
 const QUERIES_TO_SCRAPE = [
   "web-development",
@@ -27,8 +29,8 @@ async function runInitialScraping(strapi: any) {
 
     try {
       const [workanaResults, hubstaffResults] = await Promise.all([
-        puppeteerScraper.scrapeWorkana(query, 8).catch(() => []),
-        puppeteerScraper.scrapeHubstaff(query, 8).catch(() => []),
+        stagehandScraper.scrapeWorkana(query, 1).catch(() => []),
+        stagehandScraper.scrapeHubstaff(query, 1).catch(() => []),
       ]);
 
       const allFreelancers = [
@@ -84,13 +86,19 @@ async function runInitialScraping(strapi: any) {
     }
   }
 
-  await puppeteerScraper.close();
+  await stagehandScraper.close();
   strapi.log.info("✅ Initial scraping completed");
 }
 
 export default {
   register() {},
   async bootstrap({ strapi }) {
-    runInitialScraping(strapi);
+    if (BOOTSTRAP_ENABLED) {
+      runInitialScraping(strapi);
+    } else {
+      strapi.log.info(
+        "Bootstrap scraping disabled (ENABLE_INITIAL_SCRAPER!=true)",
+      );
+    }
   },
 };

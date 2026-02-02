@@ -1,11 +1,12 @@
 export default ({ env }) => ({
-  host: env('HOST', '0.0.0.0'),
-  port: env.int('PORT', 1337),
-  app: { keys: env.array('APP_KEYS') },
-  url: env('URL', 'https://sourcelander-strapi.gravitad.com'),
+  host: env("HOST", "0.0.0.0"),
+  port: env.int("PORT", 1337),
+  app: { keys: env.array("APP_KEYS") },
+  // url: env('URL', 'https://sourcelander-strapi.gravitad.com'),
+  url: env("URL", "http://localhost:1337"),
   proxy: true,
   transfer: {
-    remote: { enabled: true },                 // <- habilita transfer remotas
-    token: { salt: env('TRANSFER_TOKEN_SALT') } // <- usa tu SALT
+    remote: { enabled: true }, // <- habilita transfer remotas
+    token: { salt: env("TRANSFER_TOKEN_SALT") }, // <- usa tu SALT
   },
 });

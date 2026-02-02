@@ -1,8 +1,7 @@
-import { puppeteerScraper } from "../../../services/scraper/puppeteer-scraper";
+import { stagehandScraper } from "../../../services/scraper/stagehand-scraper";
 
 const CACHE_TTL_HOURS = 24;
 const scrapingQueue = new Map<string, Promise<number>>();
-const backgroundQueue = new Set<string>();
 
 async function getCacheCount(strapi: any, query: string): Promise<number> {
   const cutoff = new Date();
@@ -65,17 +64,17 @@ async function saveFreelancers(strapi: any, freelancers: any[], query: string) {
   }
 }
 
-async function scrapeFirstPage(strapi: any, query: string): Promise<number> {
+async function scrapeAllPages(strapi: any, query: string): Promise<number> {
   if (scrapingQueue.has(query)) {
     return scrapingQueue.get(query) as Promise<number>;
   }
 
   const scrapingPromise = (async () => {
-    strapi.log.info(`📡 Fast scraping (page 1) for: ${query}`);
+    strapi.log.info(`📡 Scraping all pages for: ${query}`);
 
     const [workanaResults, hubstaffResults] = await Promise.all([
-      puppeteerScraper.scrapeWorkana(query, 1).catch(() => []),
-      puppeteerScraper.scrapeHubstaff(query, 1).catch(() => []),
+      stagehandScraper.scrapeWorkana(query, 3).catch(() => []),
+      stagehandScraper.scrapeHubstaff(query, 3).catch(() => []),
     ]);
 
     const allFreelancers = [
@@ -85,10 +84,8 @@ async function scrapeFirstPage(strapi: any, query: string): Promise<number> {
 
     await saveFreelancers(strapi, allFreelancers, query);
     strapi.log.info(
-      `✅ Fast: ${allFreelancers.length} freelancers for: ${query}`,
+      `✅ Scraped ${allFreelancers.length} freelancers for: ${query}`,
     );
-
-    scrapeAdditionalPages(strapi, query);
 
     return allFreelancers.length;
   })();
@@ -100,34 +97,6 @@ async function scrapeFirstPage(strapi: any, query: string): Promise<number> {
   } finally {
     scrapingQueue.delete(query);
   }
-}
-
-function scrapeAdditionalPages(strapi: any, query: string) {
-  if (backgroundQueue.has(query)) return;
-  backgroundQueue.add(query);
-
-  (async () => {
-    try {
-      strapi.log.info(`🔄 Background scraping (pages 2-3) for: ${query}`);
-
-      const [workanaResults, hubstaffResults] = await Promise.all([
-        puppeteerScraper.scrapeWorkana(query, 2, 2).catch(() => []),
-        puppeteerScraper.scrapeHubstaff(query, 2, 2).catch(() => []),
-      ]);
-
-      const allFreelancers = [
-        ...workanaResults.map((f: any) => ({ ...f, source: "workana" })),
-        ...hubstaffResults.map((f: any) => ({ ...f, source: "hubstaff" })),
-      ];
-
-      await saveFreelancers(strapi, allFreelancers, query);
-      strapi.log.info(`✅ Background: +${allFreelancers.length} for: ${query}`);
-    } catch (e) {
-      strapi.log.error(`Background scraping failed for ${query}:`, e);
-    } finally {
-      backgroundQueue.delete(query);
-    }
-  })();
 }
 
 export default {
@@ -161,7 +130,7 @@ export default {
 
     if (cacheCount === 0) {
       try {
-        await scrapeFirstPage(strapi, query as string);
+        await scrapeAllPages(strapi, query as string);
         cacheCount = await getCacheCount(strapi, query as string);
       } catch (error) {
         strapi.log.error(`Scraping failed for ${query}:`, error);

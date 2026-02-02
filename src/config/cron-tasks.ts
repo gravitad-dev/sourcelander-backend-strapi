@@ -1,4 +1,6 @@
-import { puppeteerScraper } from "../services/scraper/puppeteer-scraper";
+import { stagehandScraper } from "../services/scraper/stagehand-scraper";
+
+const CRON_ENABLED = process.env.ENABLE_SCRAPER_CRON === "true";
 
 const QUERIES_TO_SCRAPE = [
   "web-development",
@@ -46,11 +48,11 @@ async function runFullScraping(strapi: any) {
   for (const query of QUERIES_TO_SCRAPE) {
     try {
       const [workanaResults, hubstaffResults] = await Promise.all([
-        puppeteerScraper.scrapeWorkana(query, 3).catch((e) => {
+        stagehandScraper.scrapeWorkana(query, 1).catch((e) => {
           strapi.log.error(`Workana error for ${query}:`, e);
           return [];
         }),
-        puppeteerScraper.scrapeHubstaff(query, 3).catch((e) => {
+        stagehandScraper.scrapeHubstaff(query, 1).catch((e) => {
           strapi.log.error(`Hubstaff error for ${query}:`, e);
           return [];
         }),
@@ -113,17 +115,19 @@ async function runFullScraping(strapi: any) {
     }
   }
 
-  await puppeteerScraper.close();
+  await stagehandScraper.close();
   strapi.log.info("✅ Weekly scraping job completed");
 }
 
-export default {
-  scraperJob: {
-    task: async ({ strapi }) => {
-      await runFullScraping(strapi);
-    },
-    options: {
-      rule: "0 6 * * 1",
-    },
-  },
-};
+export default CRON_ENABLED
+  ? {
+      scraperJob: {
+        task: async ({ strapi }) => {
+          await runFullScraping(strapi);
+        },
+        options: {
+          rule: "0 6 * * 1",
+        },
+      },
+    }
+  : {};
